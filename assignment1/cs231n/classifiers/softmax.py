@@ -30,7 +30,25 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_train = X.shape[0]
+  num_classes = W.shape[1]
+  for i in np.arange(num_train):
+    f = X[i].dot(W)
+    f -= np.max(f)
+
+    dW[:, y[i]] -= X[i]    
+    for j in np.arange(num_classes):
+      dW[:, j] += (np.exp(f[j]) / np.sum(np.exp(f))) * X[i]
+    
+    f_yi = f[y[i]]
+    softmax = np.exp(f_yi)/ np.sum(np.exp(f))
+    loss_i = - np.log (softmax)
+    loss += loss_i
+  
+  dW += reg * 2 * W
+  dW /= num_train
+  loss += reg * np.sum(W * W)
+  loss /= num_train
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -47,14 +65,23 @@ def softmax_loss_vectorized(W, X, y, reg):
   # Initialize the loss and gradient to zero.
   loss = 0.0
   dW = np.zeros_like(W)
-
+  num_train = X.shape[0]
   #############################################################################
   # TODO: Compute the softmax loss and its gradient using no explicit loops.  #
   # Store the loss in loss and the gradient in dW. If you are not careful     #
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  scores = X.dot(W)
+  scores -= np.max(scores, axis=1, keepdims=True)
+  probs = np.exp(scores) / np.sum(np.exp(scores),axis=1,keepdims=True)
+  probs_yis = probs[np.arange(scores.shape[0]), y]
+  loss = - np.sum(np.log(probs_yis)) / num_train
+  loss += reg * np.sum(W * W)
+  
+  # Subtract one from prob of correct classes as per gradient equation
+  probs[range(scores.shape[0]), y] -= 1
+  dW = X.T.dot(probs) / num_train
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
